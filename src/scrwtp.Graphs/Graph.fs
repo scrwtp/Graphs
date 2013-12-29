@@ -2,12 +2,6 @@
 
 open System
 
-module Option =
-    let defaultTo def opt = 
-        match opt with
-        | Some x    -> Some x
-        | None      -> Some def
-
 module Graphs = 
     // take an edge and switch the start and end vertices
     let invert = function ((v1, v2), weight) -> ((v2, v1), weight)

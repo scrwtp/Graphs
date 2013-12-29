@@ -23,7 +23,7 @@ module Search =
             match graph with
             | Graphs.Graph (vertices, edges) -> 
                 // start with the vertices colored white
-                let colored = 
+                let initialColoring = 
                     vertices
                     |> Seq.map (fun v -> v, Color.White)
                     |> Map.ofSeq
@@ -38,43 +38,48 @@ module Search =
                     | Some info -> map |> Map.add vertex (f info)
                     | None      -> map |> Map.add vertex (f VertexLookupInfo.Empty)
 
+                // mutable queue for storing vertices
                 let queue = System.Collections.Generic.Queue<Vertex>()
                 
-                let rec visit (queue: System.Collections.Generic.Queue<_>) colored lookup = 
+                let rec visit (queue: System.Collections.Generic.Queue<_>) vertexColoring resultLookup = 
+                    // while queue is not empty...
                     if queue.Count = 0
-                        then lookup
+                        then resultLookup
                         else
+                            // ...grab a vertex and its info
                             let current = queue.Dequeue()
                             let currentInfo = 
-                                match lookup |> Map.tryFind current with
+                                match resultLookup |> Map.tryFind current with
                                 | Some info -> info
                                 | None -> VertexLookupInfo.Empty
                             
+                            // fold over its neighbours, updating results lookup
                             let updatedColored, updatedLookup =
                                 neighbours current
-                                |> List.fold (fun (col : Map<Vertex, _>, acc) vertex -> 
-                                    match col.[vertex] with
+                                |> List.fold (fun (coloring : Map<Vertex, _>, lookup) vertex -> 
+                                    match coloring.[vertex] with
                                     | Color.White ->
+                                        // we haven't seen the vertex, put it in the queue and update its info
                                         queue.Enqueue vertex
                                         let updatedLookup =
-                                            update acc vertex <| fun info -> 
+                                            update lookup vertex <| fun info -> 
                                                 { info with predecessor = Some current; distance = currentInfo.distance + 1 }
                                         let updatedColored = 
-                                            col |> Map.add vertex Color.Gray
+                                            coloring |> Map.add vertex Color.Gray
                                         (updatedColored, updatedLookup)
-                                    | _ -> (col, acc)) (colored, lookup)
-                                
+                                    | _ -> (coloring, lookup)) (vertexColoring, resultLookup)
+                            
+                            // try processing another vertex from the queue
                             visit queue updatedColored updatedLookup
 
                 // put the starting vertex in the queue...
                 queue.Enqueue source
 
                 // ...and kick-off
-                visit queue colored Map.empty
+                visit queue initialColoring Map.empty
 
             | other -> failwithf "Not a graph: %A" other
 
-        ()
 
     module DepthFirst = 
 
@@ -95,7 +100,7 @@ module Search =
             match graph with
             | Graphs.Graph (vertices, edges) -> 
                 // start with the vertices colored white
-                let colored = 
+                let initialColoring = 
                     vertices
                     |> Seq.map (fun v -> v, Color.White)
                     |> Map.ofSeq
@@ -110,39 +115,33 @@ module Search =
                     | Some info -> map |> Map.add vertex (f info)
                     | None      -> map |> Map.add vertex (f VertexLookupInfo.Empty)
 
-                let rec visit current (initial, targets) (colored:Map<_,_>) (counter, lookup) =
-                    match initial, targets with
-                    // we have neighbouring vertices to visit
-                    | _, v::vs      -> 
-                        visit current 
-                            (initial, vs) 
-                            colored 
-                            (counter, update lookup v <| fun info -> { info with predecessor = Some current })
-                    // let's pick a new vertex to probe
-                    | x::xs, []     -> 
-                        match colored.[x] with
-                        // we didn't see this vertex before; mark it gray and recursively visit it's neighbours
-                        | Color.White -> 
-                            visit x 
-                                (x::xs, neighbours x) 
-                                (colored |> Map.add x Color.Gray)  
-                                (counter + 1, update lookup x <| fun info -> { info with discovered = counter + 1 })
-                        // we've been here; mark it black and remove it from the list
-                        | Color.Gray  -> 
-                            visit x 
-                                (xs, [])              
-                                (colored |> Map.add x Color.Black) 
-                                (counter + 1, update lookup x <| fun info -> { info with finished = counter + 1 })
-                        // only for completeness sake; if this happens, something is very wrong with the algorithm
-                        | Color.Black -> 
-                            failwithf "Unexpected Black vertex: %A" x
-                    // we're done, no more vertices to check
-                    | [], []        -> lookup
+                let rec visit current counter (vertexColoring:Map<_,_>, resultLookup) = 
+                    // it's a new vertex; tag it as discovered and mark it gray
+                    let initial = 
+                        (vertexColoring |> Map.add current Color.Gray,
+                         (update resultLookup current <| fun info -> { info with discovered = counter + 1 }),
+                         counter)
 
-                // kickstart with marking source as gray - as if the second pattern executed initially for source
-                visit source 
-                    (Set.toList vertices, neighbours source) 
-                    (colored |> Map.add source Color.Gray) 
-                    (1, update Map.empty source <| fun info -> { info with discovered = 1 })
+                    // fold over its neighbours, updating results lookup
+                    neighbours current 
+                    |> List.fold (fun (coloring:Map<_,_>, lookup, counter) vertex ->
+                        match coloring.[vertex] with
+                        | Color.White -> 
+                            // we haven't seen the vertex; visit it recursively
+                            visit vertex counter (coloring, update lookup vertex <| fun info -> { info with predecessor = Some current })
+                        | _ -> (coloring, lookup, counter)) initial
+                    // mark the current vertex black and update the info
+                    |> fun (coloring, lookup, counter) ->
+                        (coloring |> Map.add current Color.Black, (update lookup current <| fun info -> { info with finished = counter + 1 }), counter + 1)
+
+                // fold over the vertices to build the lookup, starting from the source vertex (hence the initial value of accumulator)
+                vertices
+                |> Set.toList
+                |> List.fold (fun (coloring: Map<_,_>, lookup, counter) vertex ->
+                    match coloring.[vertex] with
+                    | Color.White -> visit vertex counter (coloring, lookup)
+                    | _ -> (coloring, lookup, counter)) (visit source 0 (initialColoring, Map.empty))
+                // drop the coloring and the counter, we only care about lookup here
+                |> fun (_, lookup, _) -> lookup
 
             | other -> failwithf "Not a graph: %A" other
