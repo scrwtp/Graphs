@@ -8,67 +8,31 @@ module Option =
         | Some x    -> Some x
         | None      -> Some def
 
-module GraphUtils = 
-    let getWeight edge = 
-        match edge with
-        | Directed (_, _, weight)   -> weight
-        | Undirected (_, _, weight) -> weight
+module Graphs = 
+    let invert = function ((v1, v2), weight) -> ((v2, v1), weight)
 
-    let buildSimpleAdjacencyList graph = 
+    let (|Graph|_|)  graph = 
         match graph with
-        | G (vertices, edges) -> 
-            edges
-            |> Set.toSeq
-            |> Seq.collect (fun edge ->
-                match edge with
-                | Directed (v1, v2, _) -> 
-                    [ v1, v2 ]
-                | Undirected (v1, v2, _) ->
-                    [ (v1, v2); (v2, v1) ])
-            |> Seq.groupBy fst
-            |> Seq.map (fun (key, dst) ->
-                key, dst |> Seq.map snd |> List.ofSeq)
-            |> Map.ofSeq
-            |> AdjacencyList.Simple
+        | Directed (v, e)   -> Some (v, e)
+        | Undirected (v, e) -> Some (v, Set.union e (Set.map invert e))
 
-    let buildWeightedAdjacencyList getWeight graph = 
-        match graph with
-        | G (vertices, edges) -> 
-            edges
-            |> Set.toSeq
-            |> Seq.collect (fun edge ->
-                let weight = getWeight edge
-                match edge with
-                | Directed (v1, v2, _) -> 
-                    [ v1, (v2, weight) ]
-                | Undirected (v1, v2, _) ->
-                    [ (v1, (v2, weight)); (v2, (v1, weight)) ])
-            |> Seq.groupBy fst
-            |> Seq.map (fun (key, dst) ->
-                key, dst |> (Seq.map snd >> List.ofSeq))
-            |> Map.ofSeq
-            |> AdjacencyList.Weighted
+    let getEdges = function 
+        | Graph (v, e) -> e
+        | other -> failwithf "Not a graph: %A" other
 
-    let buildAdjacencyList getWeight graph = 
-        match graph with
-        | G (vertices, edges) -> 
-            edges
-            |> Set.toSeq
-            |> Seq.collect (fun edge ->
-                let vertices = 
-                    match edge with
-                    | Directed (v1, v2, _) -> 
-                        [ v1, v2 ]
-                    | Undirected (v1, v2, _) ->
-                        [ (v1, v2); (v2, v1) ]
-                match getWeight with
-                | Some weight -> vertices |> List.map (fun (v1, v2) -> (v1, (v2, weight)))
-                | None        -> vertices)
-            |> Seq.groupBy fst
-            |> Seq.map (fun (key, dst) ->
-                key, dst |> (Seq.map snd >> List.ofSeq))
-            |> Map.ofSeq
-            |> AdjacencyList.Weighted
+    let buildAdjacencyList =
+        getEdges
+        >> Seq.map (fun ((v1, v2), weight) -> (v1, (v2, weight)))
+        >> Seq.groupBy fst
+        >> Seq.map (fun (key, vertex) ->
+            key, vertex |> Seq.map snd |> Set.ofSeq)
+        >> Map.ofSeq
+        >> AdjacencyList.Weighted
+
+    let buildAdjacencyMatrix = 
+        getEdges 
+        >> Map.ofSeq
+        >> AdjacencyMatrix.Sparse
                 
 
         

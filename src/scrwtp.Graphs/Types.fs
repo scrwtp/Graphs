@@ -5,17 +5,15 @@ open System
 type Vertex = 
     | Label of string
 
-type Edge =
-    | Directed of Vertex * Vertex * double
-    | Undirected of Vertex * Vertex * double
-
+type Edge = (Vertex * Vertex) * double
+    
 type Graph =
-    | G of Set<Vertex> * Set<Edge>
+    | Directed of Set<Vertex> * Set<Edge>
+    | Undirected of Set<Vertex> * Set<Edge>
 
 type AdjacencyList = 
-    | Simple of Map<Vertex, Vertex list>
-    | Weighted of Map<Vertex, (Vertex * double) list>
+    | Simple of Map<Vertex, Set<Vertex>>
+    | Weighted of Map<Vertex, Set<(Vertex * double)>>
 
 type AdjacencyMatrix = 
-    | Sparse of Set<Vertex * Vertex> * (double * double * double)
-    | Array of Vertex[] * double[,]
+    | Sparse of Map<Vertex * Vertex, double>
