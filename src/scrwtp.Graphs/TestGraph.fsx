@@ -26,3 +26,6 @@ let adjMatrix   = Graphs.buildAdjacencyMatrix graph
 
 let pred1 = Search.DepthFirst.buildLookup graph (Label "A")
 let pred2 = Search.DepthFirst.buildLookup graph (Label "D")
+
+let pred3 = Search.BreadthFirst.buildLookup graph (Label "A")
+let pred4 = Search.BreadthFirst.buildLookup graph (Label "D")

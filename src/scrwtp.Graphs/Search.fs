@@ -7,6 +7,73 @@ type Color =
 
 module Search =
     module BreadthFirst = 
+
+        type VertexLookupInfo = 
+            {
+                predecessor: Vertex option
+                distance: int
+            }
+            static member Empty = 
+                {
+                    predecessor = None
+                    distance = 0
+                }
+
+        let buildLookup graph source = 
+            match graph with
+            | Graphs.Graph (vertices, edges) -> 
+                // start with the vertices colored white
+                let colored = 
+                    vertices
+                    |> Seq.map (fun v -> v, Color.White)
+                    |> Map.ofSeq
+
+                // function that gets the neighbouring nodes reachable from a vertex
+                let neighbours =
+                    Graphs.neighbours (Graphs.buildAdjacencyList graph)
+
+                // helper function for updating results lookup
+                let update map vertex f = 
+                    match map |> Map.tryFind vertex with
+                    | Some info -> map |> Map.add vertex (f info)
+                    | None      -> map |> Map.add vertex (f VertexLookupInfo.Empty)
+
+                let queue = System.Collections.Generic.Queue<Vertex>()
+                
+                let rec visit (queue: System.Collections.Generic.Queue<_>) colored lookup = 
+                    if queue.Count = 0
+                        then lookup
+                        else
+                            let current = queue.Dequeue()
+                            let currentInfo = 
+                                match lookup |> Map.tryFind current with
+                                | Some info -> info
+                                | None -> VertexLookupInfo.Empty
+                            
+                            let updatedColored, updatedLookup =
+                                neighbours current
+                                |> List.fold (fun (col : Map<Vertex, _>, acc) vertex -> 
+                                    match col.[vertex] with
+                                    | Color.White ->
+                                        queue.Enqueue vertex
+                                        let updatedLookup =
+                                            update acc vertex <| fun info -> 
+                                                { info with predecessor = Some current; distance = currentInfo.distance + 1 }
+                                        let updatedColored = 
+                                            col |> Map.add vertex Color.Gray
+                                        (updatedColored, updatedLookup)
+                                    | _ -> (col, acc)) (colored, lookup)
+                                
+                            visit queue updatedColored updatedLookup
+
+                // put the starting vertex in the queue...
+                queue.Enqueue source
+
+                // ...and kick-off
+                visit queue colored Map.empty
+
+            | other -> failwithf "Not a graph: %A" other
+
         ()
 
     module DepthFirst = 
