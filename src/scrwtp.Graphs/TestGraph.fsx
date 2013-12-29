@@ -24,4 +24,5 @@ let graph =
 let adjList     = Graphs.buildAdjacencyList graph
 let adjMatrix   = Graphs.buildAdjacencyMatrix graph
 
-let pred = Search.depthFirst graph (Label "A")
+let pred1 = Search.DepthFirst.buildLookup graph (Label "A")
+let pred2 = Search.DepthFirst.buildLookup graph (Label "D")
