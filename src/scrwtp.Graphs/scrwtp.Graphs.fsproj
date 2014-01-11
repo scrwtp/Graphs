@@ -35,8 +35,10 @@
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <ItemGroup>
     <Compile Include="Types.fs" />
+    <Compile Include="Collections.fs" />
     <Compile Include="Graph.fs" />
     <Compile Include="Search.fs" />
+    <Compile Include="ShortestPath.fs" />
     <None Include="TestGraph.fsx" />
   </ItemGroup>
   <ItemGroup>
