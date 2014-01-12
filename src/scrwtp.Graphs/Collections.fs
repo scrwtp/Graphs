@@ -39,7 +39,7 @@ module Collections =
 
         let findMin = function
             | Empty -> failwith "The heap is empty."
-            | Node (_, t, _, _) -> Some t
+            | Node (_, t, _, _) -> t
 
         let deleteMin = function
             | Empty -> failwith "Can't delete from an empty heap."
