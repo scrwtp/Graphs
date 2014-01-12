@@ -29,3 +29,28 @@ let pred2 = Search.DepthFirst.buildLookup graph (Label "D")
 
 let pred3 = Search.BreadthFirst.buildLookup graph (Label "A")
 let pred4 = Search.BreadthFirst.buildLookup graph (Label "D")
+
+
+(* testing Dijkstra's algorithm *)
+
+let graph2 =
+    let vertices =
+        [ "0"; "1"; "2"; "3"; "4" ]
+        |> List.map Vertex.Label
+        |> Set.ofList
+    let edges = 
+        [
+            (Label "0", Label "1"), 2.0
+            (Label "1", Label "2"), 3.0
+            (Label "2", Label "3"), 5.0
+            (Label "3", Label "0"), 8.0
+            
+            (Label "0", Label "4"), 4.0
+            (Label "2", Label "4"), 1.0
+            (Label "4", Label "3"), 7.0
+        ]
+        |> Set.ofList
+    (vertices, edges)
+    |> Graph.Directed
+
+let lookup = ShortestPath.Dijkstra.buildLookup graph2 (Label "0")

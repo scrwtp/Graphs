@@ -13,11 +13,6 @@ module Collections =
         let empty<'T> () =
             Heap.Empty : Heap<'T>
 
-        /// Checks if a heap is empty.
-        let isEmpty = function
-            | Empty -> true
-            | _     -> false             
-
         /// Gets the rank of a node.
         let rank = function
             | Empty -> 0
@@ -73,6 +68,10 @@ module Collections =
                             else Some <| List.min coll
                                         
                 (min, heap)) (None, Empty) heap
+
+        // Checks if the heap is empty; implemented in terms of fold due to lazy deletion
+        let isEmpty heap =
+            fold (fun _ deleted _ isLeftEmpty isRightEmpty -> deleted && isLeftEmpty && isRightEmpty) true heap
 
         /// Marks first occurence of an element td for deletion.
         /// Since the heap implements lazy deletion, the element is only marked for deletion.
