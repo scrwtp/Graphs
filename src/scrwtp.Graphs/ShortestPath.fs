@@ -26,12 +26,6 @@ module ShortestPath =
                 let neighbours =
                     Graphs.neighbours (Graphs.buildAdjacencyList graph)
 
-                // helper function for updating results lookup
-                let update map vertex f = 
-                    match map |> Map.tryFind vertex with
-                    | Some info -> map |> Map.add vertex (f info)
-                    | None      -> map |> Map.add vertex (f VertexLookupInfo.Empty)
-
                 // set up the initial state of priority queue and result lookup
                 let resultLookup, queue =
                     vertices 
@@ -40,13 +34,13 @@ module ShortestPath =
                             then vertex, { predecessor = None; distance = 0.0 }
                             else vertex, { predecessor = None; distance = infinity })
                     |> fun infos ->
-                        infos |> Map.ofSeq, 
+                        ResultLookup (infos |> Map.ofSeq, VertexLookupInfo.Empty), 
                         infos |> Set.fold (fun acc (vertex, info) -> acc |> Heap.insert (info.distance, vertex)) Heap.Empty 
                 
-                let rec visit queue resultLookup = 
+                let rec visit queue (resultLookup : ResultLookup<_>) = 
                     // while queue is not empty...
                     if Heap.isEmpty queue
-                        then resultLookup
+                        then resultLookup.Unwrap
                         else
                             // ...grab a vertex and its info
                             let current, queue = 
@@ -66,9 +60,8 @@ module ShortestPath =
                             // fold over its neighbours, updating results lookup
                             let updatedLookup, updatedQueue =
                                 neighbours current
-                                |> List.fold (fun (lookup, queue) vertex -> 
-                                    let getDistance v =
-                                        lookup |> Map.find v |> fun info -> info.distance
+                                |> List.fold (fun (lookup : ResultLookup<_>, queue) vertex -> 
+                                    let getDistance v = lookup.Find v |> fun info -> info.distance
 
                                     let distance        = getDistance current + (edges |> Map.find vertex)
                                     let currentDistance = getDistance vertex
@@ -81,7 +74,7 @@ module ShortestPath =
                                                 |> Heap.insert (distance, vertex)
 
                                             let updatedLookup =
-                                                update lookup vertex <| fun info -> 
+                                                lookup.Update vertex <| fun info -> 
                                                     { info with predecessor = Some current; distance = distance}
 
                                             (updatedLookup, updatedQueue)                                            

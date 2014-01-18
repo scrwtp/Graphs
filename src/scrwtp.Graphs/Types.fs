@@ -17,3 +17,26 @@ type AdjacencyList =
 
 type AdjacencyMatrix = 
     | Sparse of Map<Vertex * Vertex, double>
+
+type ResultLookup<'TLookupInfo> (map : Map<Vertex, 'TLookupInfo>, empty : 'TLookupInfo) = 
+    let update vertex f map =
+        match map |> Map.tryFind vertex with
+        | Some info -> map |> Map.add vertex (f info)
+        | None      -> map |> Map.add vertex (f empty)
+
+    member this.Unwrap = map
+
+    member this.Find key = 
+        map |> Map.find key
+
+    member this.TryFind key = 
+        map |> Map.tryFind key
+
+    member this.FindOrEmpty key = 
+        match this.TryFind key with
+        | Some info -> info
+        | None      -> empty        
+
+    member this.Update vertex f =   
+        ResultLookup(map |> update vertex f, empty)
+      
