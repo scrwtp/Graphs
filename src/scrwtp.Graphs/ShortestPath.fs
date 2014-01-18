@@ -19,12 +19,10 @@ module ShortestPath =
             match graph with
             | Graphs.Graph (vertices, edges) -> 
                 // adjacency list for the graph
-                let adjacencyList =
-                    Graphs.buildAdjacencyList graph
+                let adjacencyList = Graphs.buildAdjacencyList graph
 
                 // function that gets the neighbouring nodes reachable from a vertex
-                let neighbours =
-                    Graphs.neighbours (Graphs.buildAdjacencyList graph)
+                let neighbours = Graphs.neighbours (Graphs.buildAdjacencyList graph)
 
                 // set up the initial state of priority queue and result lookup
                 let resultLookup, queue =
@@ -54,8 +52,7 @@ module ShortestPath =
                             // get a set of edges going out from current vertex together with weights
                             let edges = 
                                 match adjacencyList with 
-                                | Weighted map -> map |> Map.find current |> Map.ofSeq
-                                | Simple _ -> failwith "Simple adjacency list not supported"
+                                | L map -> map |> (Map.find current >> Map.ofSeq)
 
                             // fold over its neighbours, updating results lookup
                             let updatedLookup, updatedQueue =
@@ -63,7 +60,7 @@ module ShortestPath =
                                 |> List.fold (fun (lookup : ResultLookup<_>, queue) vertex -> 
                                     let getDistance v = lookup.Find v |> fun info -> info.distance
 
-                                    let distance        = getDistance current + (edges |> Map.find vertex)
+                                    let distance        = getDistance current + Map.find vertex edges
                                     let currentDistance = getDistance vertex
 
                                     if distance < currentDistance

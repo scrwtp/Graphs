@@ -25,26 +25,17 @@ module Graphs =
         >> Seq.map (fun (key, vertex) ->
             key, vertex |> Seq.map snd |> Set.ofSeq)
         >> Map.ofSeq
-        >> AdjacencyList.Weighted
+        >> AdjacencyList.L
 
     // Builds an adjacency matrix from a set of edges.
     let buildAdjacencyMatrix = 
         getEdges 
         >> Map.ofSeq
-        >> AdjacencyMatrix.Sparse
+        >> AdjacencyMatrix.M
 
     // Gets the neighbour vertices using an adjacency list.
-    let neighbours adjacencyList vertex = 
-        match adjacencyList with
-        | Simple list -> 
-            match list |> Map.tryFind vertex with
-            | Some vertices -> vertices |> Set.toList
-            | None -> List.empty
-        | Weighted list ->
-            match list |> Map.tryFind vertex with
-            | Some vertices -> vertices |> Set.toList |> List.map fst
-            | None -> List.empty
-                
-
-        
+    let neighbours (L list) vertex = 
+        match list |> Map.tryFind vertex with
+        | Some vertices -> vertices |> Set.toList |> List.map fst
+        | None -> List.empty
         

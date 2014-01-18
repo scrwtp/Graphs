@@ -11,12 +11,11 @@ type Graph =
     | Directed of Set<Vertex> * Set<Edge>
     | Undirected of Set<Vertex> * Set<Edge>
 
-type AdjacencyList = 
-    | Simple of Map<Vertex, Set<Vertex>>
-    | Weighted of Map<Vertex, Set<(Vertex * double)>>
+type AdjacencyList<'TLabel when 'TLabel : comparison> = 
+    L of Map<Vertex, Set<(Vertex * 'TLabel)>>
 
-type AdjacencyMatrix = 
-    | Sparse of Map<Vertex * Vertex, double>
+type AdjacencyMatrix<'TLabel when 'TLabel : comparison> = 
+    M of Map<Vertex * Vertex, 'TLabel>
 
 type ResultLookup<'TLookupInfo> (map : Map<Vertex, 'TLookupInfo>, empty : 'TLookupInfo) = 
     let update vertex f map =

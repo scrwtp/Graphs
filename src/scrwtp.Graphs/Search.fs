@@ -29,8 +29,7 @@ module Search =
                     |> Map.ofSeq
 
                 // function that gets the neighbouring nodes reachable from a vertex
-                let neighbours =
-                    Graphs.neighbours (Graphs.buildAdjacencyList graph)
+                let neighbours = Graphs.neighbours (Graphs.buildAdjacencyList graph)
 
                 // mutable queue for storing vertices
                 let queue = System.Collections.Generic.Queue<Vertex>()
@@ -97,8 +96,7 @@ module Search =
                     |> Map.ofSeq
 
                 // function that gets the neighbouring nodes reachable from a vertex
-                let neighbours =
-                    Graphs.neighbours (Graphs.buildAdjacencyList graph)
+                let neighbours = Graphs.neighbours (Graphs.buildAdjacencyList graph)
 
                 let rec visit current counter (vertexColoring : Map<_,_>, resultLookup : ResultLookup<_>) = 
                     // it's a new vertex; tag it as discovered and mark it gray
