@@ -73,13 +73,16 @@ module Collections =
         let isEmpty heap =
             fold (fun _ deleted _ isLeftEmpty isRightEmpty -> deleted && isLeftEmpty && isRightEmpty) true heap
 
-        /// Marks first occurence of an element td for deletion.
-        /// Since the heap implements lazy deletion, the element is only marked for deletion.
+        /// Marks all occurences of an element td for deletion.
+        /// Since the heap implements lazy deletion, the elements are only marked for deletion.
         let rec delete td heap =
-            (fold (fun rank deleted t a b (acc, marked) ->
-                if not marked && t = td
-                    then Node (rank, true, t, a (acc, true), b (acc, true))
-                    else Node (rank, deleted, t, a (acc, marked), b (acc, marked))) (fun (acc, marked) -> acc) heap) (Empty, false)
+            match heap with
+            | Node (rank, deleted, t, a, b) when not deleted ->
+                Node (rank, (t = td), t, delete td a, delete td b) 
+            | Node (rank, deleted, t, a, b) -> 
+                Node (rank, deleted, t, delete td a, delete td b)
+            | Empty ->
+                Empty
 
         /// Removes the minimum element from the heap.
         /// Deletes marked elements from the heap.
